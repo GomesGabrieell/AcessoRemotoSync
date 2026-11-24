@@ -103,7 +103,13 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   await painel.getByText("Link copiado.", { exact: true }).waitFor();
   const urlConvite = await link.inputValue();
   assert.equal(await painel.evaluate(() => navigator.clipboard.readText()), urlConvite);
-  await painel.locator("#ativos").getByRole("button", { name: "Acessar", exact: true }).waitFor();
+  const acessar = painel.locator("#ativos").getByRole("button", { name: "Acessar", exact: true });
+  await acessar.click();
+  const statusConvite = painel.locator("#status-convite");
+  await statusConvite.filter({ hasText: "Envie o link ao cliente para ele baixar e executar o SyncDesk." }).waitFor();
+  assert.equal(await statusConvite.evaluate((elemento) => document.activeElement === elemento), true);
+  assert.equal(await painel.locator("#visualizador").isVisible(), false);
+  assert.equal(await link.inputValue(), urlConvite);
   if (process.env.SYNC_DESK_CAPTURAS)
     await painel.screenshot({ path: path.join(process.env.SYNC_DESK_CAPTURAS, "painel-web.png"),
       mask: [link], maskColor: "#141a1b" });

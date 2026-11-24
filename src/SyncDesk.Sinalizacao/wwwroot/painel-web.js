@@ -6,12 +6,18 @@ const estados = {
   expirado: "Expirado", codigo: "Expirado", duracao: "Tempo máximo", inatividade: "Inatividade",
   conexao: "Conexão perdida", transporte: "Conexão interrompida",
 };
+const orientacoes = {
+  aguardando: "Envie o link ao cliente para ele baixar e executar o SyncDesk.",
+  autorizacao: "O cliente já abriu o SyncDesk. Aguarde a autorização dele.",
+  conectando: "O cliente autorizou. Aguarde a abertura da tela remota.",
+};
 const horario = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
 const tabelas = new WeakMap();
 let dados;
 let selecionado;
 let estadoRemoto;
 let mensagemRemota;
+let orientarConvite = false;
 let atualizando = false;
 let criando = false;
 let revisao = 0;
@@ -37,6 +43,7 @@ function voltarAoPainel() {
 
 function desanexar() {
   selecionado = estadoRemoto = mensagemRemota = undefined;
+  orientarConvite = false;
   moldura.removeAttribute("src");
   voltarAoPainel();
 }
@@ -104,16 +111,26 @@ el("recolher").onclick = () => {
 };
 
 function selecionar(id) {
-  if (id === selecionado && !["offline", "pronto"].includes(estadoRemoto)) return;
+  if (id === selecionado && !["offline", "pronto"].includes(estadoRemoto)) return true;
   if (["aguardando", "negociando", "ativo"].includes(estadoRemoto)) {
     mensagem("Encerre o atendimento atual antes de acompanhar outro convite.");
-    return;
+    return false;
   }
+  orientarConvite = false;
   selecionado = id;
   estadoRemoto = "abrindo";
   mensagemRemota = "";
   moldura.src = "/sessao?id=" + encodeURIComponent(id);
   renderizar();
+  return true;
+}
+
+function acessar(id) {
+  if (!selecionar(id)) return;
+  orientarConvite = true;
+  mensagem();
+  renderizar();
+  el("status-convite").focus();
 }
 
 window.addEventListener("message", ({ origin, source, data }) => {
@@ -189,7 +206,11 @@ function renderizar() {
   if (el("link").value !== url) el("link").value = url;
   el("copiar-link").disabled = !url;
   const status = el("status-convite");
-  const texto = convite ? mensagemRemota || estados[convite.registro.status] : "";
+  const estado = convite?.registro.status;
+  const etapa = estadoRemoto === "aguardando" ? "autorizacao" : estadoRemoto === "negociando" ? "conectando" : estado;
+  const orientacao = orientarConvite && !["offline", "pronto", "finalizando"].includes(estadoRemoto)
+    ? orientacoes[etapa] : "";
+  const texto = convite ? [mensagemRemota || estados[estado], orientacao].filter(Boolean).join(" ") : "";
   if (status.textContent !== texto) status.textContent = texto;
   status.hidden = !texto;
 
@@ -228,7 +249,7 @@ function linha(registro, permiteAcesso) {
     const botao = document.createElement("button");
     botao.type = "button";
     botao.textContent = "Acessar";
-    botao.onclick = () => selecionar(id);
+    botao.onclick = () => acessar(id);
     tr.insertCell().append(botao);
   }
   return tr;
