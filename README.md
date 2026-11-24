@@ -34,6 +34,20 @@ Os parâmetros detalhados estão em [Implantação Web](#implantação-web) e [S
 
 Na Oracle Cloud Ampere A1, use Ubuntu ARM64 e o runtime ASP.NET Core 10 para ARM64. O servidor e o painel rodam na VPS. A publicação do portátil `SyncDesk.exe` é feita separadamente no Windows x64.
 
+### Piloto gratuito com Cloudflare Quick Tunnel
+
+No Windows com PowerShell 7, SDK .NET 10 e `cloudflared` no PATH, execute:
+
+```powershell
+pwsh -File .\scripts\piloto-cloudflare.ps1
+```
+
+O script abre um endereço temporário `trycloudflare.com`, gera o portátil apontando para esse endereço e inicia o servidor HTTPS em loopback. Os dados de login ficam em `%LOCALAPPDATA%\SyncDesk\piloto-cloudflare\ACESSO.txt`. Entre no painel público e use **Novo link** para convidar um cliente. O computador que iniciou o piloto precisa permanecer ligado e conectado à internet.
+
+Para finalizar, execute `pwsh -File .\scripts\piloto-cloudflare.ps1 -Parar`. A próxima execução gera outro endereço e outro portátil.
+
+O túnel encaminha HTTPS e WebSocket. A mídia usa conexão direta WebRTC com STUN neste piloto. Para atender redes que exigem relay, configure um servidor TURN separado. Para uma URL fixa e operação contínua, use um Cloudflare Tunnel com domínio próprio e um host permanente, ou siga a [implantação em VPS](#publicar-para-dois-computadores-em-redes-diferentes). O servidor ASP.NET Core roda no host; o GitHub armazena o código-fonte. [Quick Tunnels](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/) · [WebSocket no Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/)
+
 ## Transmissão na versão 0.5
 
 A captura reaproveita o monitor autorizado e usa Desktop Duplication (DXGI) com Direct3D 11 quando disponível. A cópia para memória compartilhada do WebView2 alimenta um `VideoFrame` com pixels BGRX. Quando o runtime aceita um gerador de trilhas, o quadro entra direto na trilha WebRTC. O WebRTC faz a codificação de vídeo e prefere H.264 quando anunciado pelo runtime, com os demais codecs disponíveis para negociação. A captura GDI continua disponível com pixels binários para saídas incompatíveis, giradas ou que precisem de redução antes da captura. JPEG é a alternativa para runtimes que não suportam o caminho binário.
