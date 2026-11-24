@@ -11,6 +11,7 @@ const conviteWeb = location.pathname === "/sessao" ? parametros.get("id") : null
 const tecnico = Boolean(conviteWeb) || parametros.get("modo") === "tecnico";
 const modo = tecnico ? "tecnico" : "cliente";
 const nativo = window.syncDeskServidor && window.chrome?.webview;
+const conviteNoNavegador = !nativo && !tecnico && parametros.get("modo") === "receber";
 const capturaWindows = Boolean(nativo && window.syncDeskCapturaNativa === true);
 if (conviteWeb) document.body.dataset.web = "true";
 const testeLocal = nativo
@@ -23,7 +24,7 @@ if (testeLocal) {
   el("credencial").required = false;
 }
 const alternar = el("trocar-modo");
-alternar.hidden = Boolean(nativo || conviteWeb);
+alternar.hidden = Boolean(nativo || conviteWeb || conviteNoNavegador);
 alternar.href = tecnico ? "/" : "/?modo=tecnico";
 alternar.textContent = tecnico ? "Modo Cliente" : "Modo Técnico";
 el(modo).hidden = false;
@@ -32,7 +33,12 @@ let socket;
 let transporte;
 let captura;
 let capturaNativa;
-let chaveInicial = window.syncDeskConvite;
+let chaveInicial = conviteNoNavegador ? location.hash.slice(1) : window.syncDeskConvite;
+if (conviteNoNavegador) {
+  history.replaceState(null, "", location.pathname + location.search);
+  el("descricao-consentimento").textContent = "O técnico quer visualizar a tela ou janela que você escolher.";
+  el("aceitar").textContent = "Escolher tela para compartilhar";
+}
 let videoConfirmado = false;
 let quadroPublicado;
 let seletor;
@@ -78,6 +84,7 @@ const painel = prepararPainel(tecnico, nativo, async () => {
 const diagnostico = (evento) => nativo?.postMessage({ tipo: "diagnostico", evento, sessao: atendimento });
 el("linha-controle").hidden = !capturaWindows;
 el("usar-convite").hidden = !capturaWindows;
+el("permissao-cliente").hidden = conviteNoNavegador;
 el("permissao-cliente").textContent = capturaWindows
   ? "O técnico poderá alternar entre as telas atualmente conectadas e transferir arquivos durante o atendimento."
   : "Escolha uma janela ou tela para compartilhar após autorizar.";
@@ -319,7 +326,7 @@ function mostrar(estado, mensagem) {
     parent.postMessage({ tipo: "syncdesk-fase", id: conviteWeb, estado, mensagem }, location.origin);
   painel.estado(fase, socket?.readyState === WebSocket.OPEN);
   el("status").textContent = mensagem;
-  el("codigo-cliente").hidden = tecnico || fase !== "pronto";
+  el("codigo-cliente").hidden = tecnico || conviteNoNavegador || fase !== "pronto";
   el("consentimento").hidden = tecnico || fase !== "solicitado";
   el("conectar").hidden = !tecnico || Boolean(conviteWeb) || !["pronto", "offline"].includes(fase);
   el("conectar").querySelector("button").disabled = fase !== "pronto";
@@ -327,7 +334,7 @@ function mostrar(estado, mensagem) {
     !["negociando", "ativo", "consultando", "aguardando"].includes(fase);
   el("area-remota").hidden = !tecnico || fase !== "ativo";
   el("atividade-cliente").hidden = tecnico || fase !== "ativo";
-  el("reconectar").hidden = fase !== "offline";
+  el("reconectar").hidden = conviteNoNavegador || fase !== "offline";
 }
 
 function enviar(tipo, dados = {}) {
@@ -452,7 +459,7 @@ function pronto() {
   }
   el("controle-cliente").textContent = "O técnico pode ver a tela compartilhada.";
   if (!nativo) {
-    publicarPermissao(false, "");
+    publicarPermissao(false, conviteNoNavegador ? "Cliente no navegador" : "");
     return;
   }
   if (capturaNativa) {
@@ -476,8 +483,16 @@ function receberDados(dados) {
     controle.permitir(controlePermitido && !esperandoRede && (!dados.capturaNativa || monitorPronto !== undefined));
     const computador = typeof dados.computador === "string" ? dados.computador.trim().slice(0, 80) : "";
     el("computador-remoto").textContent = computador || "Computador do cliente";
-    if (conviteWeb && videoConfirmado)
+    if (conviteWeb && videoConfirmado) {
       enviar("visualizando", { computador });
+    } else if (conviteWeb && !dados.capturaNativa) {
+      const revisao = ++atualizandoVideo;
+      el("tela").requestVideoFrameCallback(() => {
+        if (revisao !== atualizandoVideo || fase !== "ativo" || !autorizada()) return;
+        videoConfirmado = true;
+        enviar("visualizando", { computador: el("computador-remoto").textContent });
+      });
+    }
     el("controle-tecnico").textContent = dados.controle === true
       ? "Clique no vídeo para usar o teclado. Ctrl+Alt+Esc devolve o foco ao SyncDesk."
       : "Visualizando a tela. O cliente não está compartilhando o mouse e o teclado.";
@@ -523,10 +538,11 @@ async function receber(evento) {
       mostrar("vinculado", "Convite vinculado. Aguardando o técnico.");
       break;
     case "conviteInvalido":
-      mostrar("pronto", "Convite inválido, expirado ou usado. Confira o código ou solicite um novo link.");
+      if (conviteNoNavegador) finalizarConviteNoNavegador();
+      else mostrar("pronto", "Convite inválido, expirado ou usado. Confira o código ou solicite um novo link.");
       break;
     case "conviteAguardando":
-      mostrar("consultando", "Aguardando o cliente executar o SyncDesk.");
+      mostrar("consultando", "Aguardando o cliente abrir o link.");
       break;
     case "solicitacao":
       atendimento = evento.atendimento;
@@ -593,6 +609,7 @@ async function receber(evento) {
       atendimento = undefined;
       pararTransporte();
       if (tecnico) mostrar("pronto", evento.mensagem);
+      else if (conviteNoNavegador) finalizarConviteNoNavegador(evento.mensagem);
       else {
         mostrar("abrindo", evento.mensagem);
         socket.close();
@@ -607,6 +624,13 @@ async function receber(evento) {
   }
 }
 
+function finalizarConviteNoNavegador(mensagem = "") {
+  const atual = socket;
+  socket = undefined;
+  atual?.close();
+  mostrar("finalizado", [mensagem, "Solicite um novo link ao técnico para outro atendimento."].filter(Boolean).join(" "));
+}
+
 function desconectar(mensagem) {
   diagnostico("rede_perdida");
   pararTransporte();
@@ -617,7 +641,8 @@ function desconectar(mensagem) {
   codigo = undefined;
   el("codigo").value = "";
   el("credencial").value = "";
-  mostrar("offline", mensagem);
+  if (conviteNoNavegador) finalizarConviteNoNavegador(mensagem);
+  else mostrar("offline", mensagem);
 }
 
 function abrir() {
@@ -647,7 +672,7 @@ function abrir() {
   atual.onclose = () => {
     if (atual !== socket) return;
     desconectar(abriu
-      ? "Conexão com o servidor encerrada. Reconecte para iniciar um novo atendimento."
+      ? "Conexão com o servidor encerrada." + (conviteNoNavegador ? "" : " Reconecte para iniciar um novo atendimento.")
       : origemSinalizacao.startsWith("ws:")
         ? "O servidor de teste local não respondeu. Inicie o teste local e tente reconectar."
         : "Não foi possível conectar ao servidor. Confira a rede e o certificado HTTPS, depois tente reconectar.");
@@ -731,11 +756,15 @@ el("aceitar").addEventListener("click", async () => {
 el("encerrar").addEventListener("click", () => encerrar("Encerrando atendimento…"));
 el("encerrar-tecnico").addEventListener("click", () => encerrar("Encerrando atendimento…"));
 el("reconectar").addEventListener("click", abrir);
-window.addEventListener("offline", () =>
-  desconectar("Conexão de rede perdida. Reconecte para iniciar um novo atendimento."));
+window.addEventListener("offline", () => desconectar(conviteNoNavegador
+  ? "Conexão de rede perdida." : "Conexão de rede perdida. Reconecte para iniciar um novo atendimento."));
 window.addEventListener("pagehide", () => {
   el("credencial").value = "";
   pararTransporte();
   socket?.close();
 });
-abrir();
+if (conviteNoNavegador && !/^[0-9a-f]{48}$/.test(chaveInicial)) {
+  mostrar("finalizado", "Abra o link de atendimento enviado pelo técnico.");
+} else if (conviteNoNavegador && !navigator.mediaDevices?.getDisplayMedia) {
+  mostrar("finalizado", "Abra o convite em um navegador de computador compatível com compartilhamento de tela.");
+} else abrir();

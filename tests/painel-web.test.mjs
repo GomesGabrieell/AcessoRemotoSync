@@ -106,7 +106,7 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   const acessar = painel.locator("#ativos").getByRole("button", { name: "Acessar", exact: true });
   await acessar.click();
   const statusConvite = painel.locator("#status-convite");
-  await statusConvite.filter({ hasText: "Envie o link ao cliente para ele baixar e executar o SyncDesk." }).waitFor();
+  await statusConvite.filter({ hasText: "Envie o link ao cliente para abrir no navegador." }).waitFor();
   assert.equal(await statusConvite.evaluate((elemento) => document.activeElement === elemento), true);
   assert.equal(await painel.locator("#visualizador").isVisible(), false);
   assert.equal(await link.inputValue(), urlConvite);
@@ -120,7 +120,7 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   assert.equal((await outro.request.delete(url + "/api/web/convites/" + id, { headers: { Origin: url } })).status(), 404);
   const clienteCtx = await browser.newContext({ ignoreHTTPSErrors: true, acceptDownloads: true });
   const convite = await clienteCtx.newPage();
-  await convite.goto(urlConvite);
+  await convite.goto(urlConvite + "?modo=windows");
   const download = convite.waitForEvent("download");
   await convite.getByRole("link", { name: "Baixar e iniciar atendimento" }).click();
   const baixado = await download;
@@ -275,12 +275,61 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   const cancelado = await link.inputValue();
   await painel.reload();
   await painel.locator("#ativos").getByRole("button", { name: "Acessar", exact: true }).click();
-  await painel.locator("#status-convite").filter({ hasText: "Aguardando o cliente executar o SyncDesk." }).waitFor();
+  await painel.locator("#status-convite").filter({ hasText: "Aguardando o cliente abrir o link." }).waitFor();
   assert.equal(await link.inputValue(), cancelado);
   const abertos = (await (await navegador.request.get(url + "/api/web/painel")).json()).atuais;
   const canceladoId = abertos.find((c) => c.url === new URL(cancelado).pathname).registro.id;
   assert.equal((await navegador.request.delete(url + "/api/web/convites/" + canceladoId, { headers: { Origin: url } })).status(), 204);
   assert.equal((await convite.request.get(cancelado)).status(), 404);
+
+  await painel.getByRole("button", { name: "Novo link", exact: true }).click();
+  await painel.getByRole("button", { name: "Copiar link", exact: true }).click();
+  const linkNavegador = await link.inputValue();
+  const contextoWeb = await browser.newContext({ ignoreHTTPSErrors: true });
+  await contextoWeb.addInitScript(() => {
+    window.pedidosDeCaptura = 0;
+    navigator.mediaDevices.getDisplayMedia = async () => {
+      window.pedidosDeCaptura++;
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 200;
+      const contexto = canvas.getContext("2d");
+      const desenhar = () => {
+        contexto.fillStyle = contexto.fillStyle === "#008000" ? "blue" : "green";
+        contexto.fillRect(0, 0, 320, 200);
+        requestAnimationFrame(desenhar);
+      };
+      desenhar();
+      return canvas.captureStream(20);
+    };
+  });
+  const clienteWeb = await contextoWeb.newPage();
+  await clienteWeb.goto(linkNavegador);
+  const continuar = clienteWeb.getByRole("link", { name: "Continuar no navegador" });
+  await continuar.waitFor();
+  assert.equal(await clienteWeb.locator("#baixar").isVisible(), false);
+  await acessar.click();
+  await continuar.click();
+  await clienteWeb.getByText("Técnico: Ana", { exact: true }).waitFor();
+  assert.equal(new URL(clienteWeb.url()).hash, "");
+  assert.equal(await clienteWeb.evaluate(() => window.pedidosDeCaptura), 0);
+  assert.equal(await clienteWeb.locator("#linha-controle").isVisible(), false);
+  assert.equal(await painel.locator("#visualizador").isVisible(), false);
+  await clienteWeb.getByRole("button", { name: "Escolher tela para compartilhar" }).click();
+  await clienteWeb.getByRole("heading", { name: "Atendimento ativo" }).waitFor();
+  await visor.locator("#tela").waitFor();
+  await visor.getByText("Cliente no navegador", { exact: true }).waitFor();
+  assert.equal(await visor.locator("#mostrar-arquivos").isEnabled(), false);
+  await clienteWeb.locator("#chat-cliente").click();
+  await clienteWeb.getByRole("textbox", { name: "Mensagem" }).fill("Olá, técnico");
+  await clienteWeb.getByRole("textbox", { name: "Mensagem" }).press("Enter");
+  await visor.getByText("Cliente · Olá, técnico", { exact: true }).waitFor();
+  await clienteWeb.getByRole("button", { name: "Encerrar atendimento" }).click();
+  await clienteWeb.getByText(/Solicite um novo link/).waitFor();
+  await painel.locator("#ultimos").getByRole("cell", { name: "Cliente no navegador", exact: true }).waitFor();
+  assert.equal(await painel.locator("#visualizador").isVisible(), false);
+  assert.equal((await contextoWeb.request.get(linkNavegador)).status(), 404);
+
   const categoriasComSegredo = saida.split(/\r?\n/).filter((linha) => linha.includes(chave) || linha.includes(senha))
     .map((linha) => { try { return JSON.parse(linha).Category; } catch { return "saída sem categoria"; } });
   assert.deepEqual(categoriasComSegredo, []);

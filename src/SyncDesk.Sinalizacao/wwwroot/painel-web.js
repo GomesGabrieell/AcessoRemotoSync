@@ -7,7 +7,7 @@ const estados = {
   conexao: "Conexão perdida", transporte: "Conexão interrompida",
 };
 const orientacoes = {
-  aguardando: "Envie o link ao cliente para ele baixar e executar o SyncDesk.",
+  aguardando: "Envie o link ao cliente para abrir no navegador.",
   autorizacao: "O cliente já abriu o SyncDesk. Aguarde a autorização dele.",
   conectando: "O cliente autorizou. Aguarde a abertura da tela remota.",
 };

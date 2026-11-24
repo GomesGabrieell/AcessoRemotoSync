@@ -1,5 +1,6 @@
 const el = (id) => document.getElementById(id);
 const chave = location.pathname.split("/").at(-1);
+const modoWindows = new URLSearchParams(location.search).get("modo") === "windows";
 
 async function preparar() {
   if (!/^[0-9a-f]{48}$/.test(chave)) {
@@ -12,6 +13,16 @@ async function preparar() {
       el("orientacao").textContent = resposta.status === 404 ?
         "Este convite expirou, foi cancelado ou já foi usado. Solicite um novo link ao técnico." :
         "O convite está indisponível no momento. Atualize a página em instantes.";
+      return;
+    }
+    if (!modoWindows) {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        el("orientacao").textContent = "Abra o convite em um navegador de computador compatível com compartilhamento de tela.";
+        return;
+      }
+      el("orientacao").textContent = "Acompanhe o atendimento pelo navegador. Você escolhe qual tela ou janela o técnico poderá ver.";
+      el("continuar").href = "/?modo=receber#" + chave;
+      el("continuar").hidden = false;
       return;
     }
     const { download } = await resposta.json();
