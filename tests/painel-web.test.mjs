@@ -13,6 +13,7 @@ const projeto = fileURLToPath(new URL("../src/SyncDesk.Sinalizacao/", import.met
 const scriptAceite = fileURLToPath(new URL("../scripts/testar-aceite-web.ps1", import.meta.url));
 const scriptEstimulo = fileURLToPath(new URL("../scripts/estimulo-video.ps1", import.meta.url));
 const executavelNativo = process.env.SYNC_DESK_WEB_NATIVO;
+const autorizarControleNativo = Boolean(executavelNativo && process.env.SYNC_DESK_WEB_CONTROLE);
 const medirVideo = Boolean(executavelNativo && process.env.SYNC_DESK_MEDIR_VIDEO);
 const segundosResistencia = executavelNativo ? Math.max(0, Math.min(180, Number(process.env.SYNC_DESK_RESISTENCIA) || 0)) : 0;
 const senha = randomBytes(32).toString("base64url");
@@ -171,7 +172,8 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   await duplicado.close();
   if (executavelNativo) {
     await new Promise((resolve, reject) => {
-      const aceite = spawn("powershell.exe", ["-NoProfile", "-STA", "-File", scriptAceite, "-Id", String(agente.pid)]);
+      const aceite = spawn("powershell.exe", ["-NoProfile", "-STA", "-File", scriptAceite, "-Id", String(agente.pid),
+        ...(autorizarControleNativo ? ["-Controle"] : [])]);
       let saidaAceite = "";
       aceite.stderr.on("data", (dados) => { saidaAceite += dados; });
       aceite.once("error", reject);
@@ -186,7 +188,7 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   const visor = painel.frameLocator("#visualizador");
   await visor.locator("#tela").waitFor();
   await visor.locator('[aria-label="Tela compartilhada pelo cliente · Tela 1"]').waitFor();
-  if (!executavelNativo) await visor.locator("video.controlavel").waitFor();
+  if (!executavelNativo || autorizarControleNativo) await visor.locator("video.controlavel").waitFor();
   const computador = await visor.locator("#computador-remoto").textContent();
   assert.equal(computador.toLowerCase(), (executavelNativo ? os.hostname() : "PC de teste").toLowerCase());
   assert.equal((await visor.locator(".barra-sessao").boundingBox()).height, 32);

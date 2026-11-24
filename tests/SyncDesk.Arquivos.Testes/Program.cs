@@ -3,8 +3,28 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using SyncDesk;
 using SyncDesk.Arquivos;
+using SyncDesk.Controle;
 using SyncDesk.Diagnostico;
 
+await Caso("Mouse e teclado locais mantêm a prioridade enquanto estiverem em uso", _ =>
+{
+    var prioridade = new PrioridadeEntradaLocal();
+    Exigir(!prioridade.Pausada(1000), "Controle remoto pausado sem entrada local.");
+    prioridade.Registrar(1000);
+    prioridade.Registrar(1300);
+    Exigir(prioridade.Pausada(1500), "Um novo movimento deve renovar a pausa.");
+    Exigir(!prioridade.Pausada(1800), "Controle remoto deve retomar após 500 ms.");
+    prioridade.RegistrarBotao(2000, 0, true);
+    prioridade.RegistrarTecla(2010, 0xA2, true);
+    Exigir(prioridade.BotaoPressionado(0) && prioridade.TeclaPressionada(0xA2),
+        "O botão e a tecla locais devem permanecer protegidos.");
+    prioridade.RegistrarBotao(5000, 0, false);
+    Exigir(prioridade.Pausada(6000), "Soltar o mouse não deve interromper o uso do teclado local.");
+    prioridade.RegistrarTecla(6500, 0xA2, false);
+    Exigir(prioridade.Pausada(6999) && !prioridade.Pausada(7000),
+        "Controle remoto deve retomar 500 ms depois da última soltura.");
+    return Task.CompletedTask;
+});
 await Caso("Técnico → cliente: lote, arquivo vazio e colisão de nomes", TecnicoParaCliente);
 await Caso("Cliente → técnico: múltiplas janelas de dados", ClienteParaTecnico);
 await Caso("Cancelamento no meio do arquivo", pasta => Interromper(pasta, cancelar: true));

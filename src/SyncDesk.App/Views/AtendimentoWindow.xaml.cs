@@ -31,7 +31,7 @@ public partial class AtendimentoWindow : Window
     private readonly Uri _endereco;
     private readonly bool _tecnico;
     private readonly string? _convite;
-    private readonly ControleAssistido _controle = new();
+    private readonly ControleAssistido _controle;
     private readonly DiagnosticoLocal _diagnostico = new();
     private readonly PreferenciasTecnico? _preferencias;
     private readonly DispatcherTimer _verificarEntrada = new() { Interval = TimeSpan.FromMilliseconds(500) };
@@ -55,6 +55,7 @@ public partial class AtendimentoWindow : Window
     public AtendimentoWindow(Uri origem, bool tecnico, string? convite = null)
     {
         InitializeComponent();
+        _controle = new(acao => Dispatcher.BeginInvoke(DispatcherPriority.Input, acao));
         Title = tecnico ? "SyncDesk — Técnico" : "SyncDesk — Cliente";
         if (tecnico) Width = 1000;
         _tecnico = tecnico;

@@ -178,6 +178,7 @@ No Windows, execute o SyncDesk publicado uma vez para receber suporte e outra co
 
 - O aplicativo Windows começa pelo monitor principal após o aceite. Com vários monitores autorizados, use **Tela 1**, **Tela 2** etc. O cliente pode autorizar telas conectadas depois do início com **Autorizar novas telas**. Apenas a tela selecionada é transmitida.
 - O painel calcula as posições sobre a imagem exibida. O Windows usa as coordenadas físicas do monitor selecionado, inclusive em posições negativas, com DPI por monitor. A troca solta teclas e botões pressionados. Para digitar, dê foco a uma janela da tela selecionada.
+- O cliente tem prioridade no mouse e no teclado. A atividade local pausa os comandos remotos enquanto o cliente mantém uma tecla ou botão pressionado e por 500 ms após o último evento. Os comandos descartados durante a pausa não são executados depois. A detecção acontece no portátil, apenas durante o controle autorizado.
 - A captura nativa compartilha monitores inteiros e aceita até 3840 pixels no maior lado, limitada também a 8,3 milhões de pixels. A alternativa JPEG fica limitada a 1920 pixels no maior lado. A resolução e a taxa de quadros enviadas dependem do perfil, da capacidade de processamento e da conexão.
 - A barra do técnico tem 32 pixels CSS. O menu **Ações** contém **Tamanho original** e métricas. O chat funciona durante a sessão e é apagado no encerramento.
 - O Windows restringe `SendInput` via UIPI. Um SyncDesk de usuário comum pode enviar entrada a aplicativos no mesmo nível de integridade ou inferior. Prompt de UAC no desktop seguro, tela de bloqueio, tela de entrada, **Ctrl+Alt+Del** e áreas de trabalho protegidas ficam fora do atendimento. Conteúdo protegido pode aparecer em preto ou ausente. O aplicativo roda sem elevação e desativa o controle se deixa de detectar o desktop interativo.
@@ -307,7 +308,7 @@ dotnet publish .\src\SyncDesk.Sinalizacao -c Release -o .\artifacts\teste-web-lo
 
 ### Verificação
 
-`npm.cmd --prefix tests test` cobre o painel, a sinalização, convites e transporte. Defina `SYNC_DESK_WEB_NATIVO` com o caminho absoluto do portátil publicado e rode `node --test tests/painel-web.test.mjs` para baixar, executar e autorizar o cliente Windows de verdade no teste em loopback. Execute a partir de uma sessão interativa do Windows, com a porta 7446 livre e Chrome disponível. O teste autoriza a própria sessão controlada, sem habilitar mouse nem teclado.
+`npm.cmd --prefix tests test` cobre o painel, a sinalização, convites e transporte. Defina `SYNC_DESK_WEB_NATIVO` com o caminho absoluto do portátil publicado e rode `node --test tests/painel-web.test.mjs` para baixar, executar e autorizar o cliente Windows de verdade no teste em loopback. Execute a partir de uma sessão interativa do Windows, com a porta 7446 livre e Chrome disponível. Defina também `SYNC_DESK_WEB_CONTROLE=1` para verificar que o cliente pode autorizar mouse e teclado e que o painel habilita o controle. Nesse teste o técnico não aciona as teclas nem o mouse remotos.
 
 ### Arquivos da migração
 

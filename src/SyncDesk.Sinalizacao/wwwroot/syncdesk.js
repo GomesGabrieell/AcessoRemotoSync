@@ -131,7 +131,7 @@ async function observarVideo() {
 function publicarPermissao(permitido, computador) {
   controlePermitido = permitido;
   el("controle-cliente").textContent = permitido
-    ? "O técnico pode ver a tela e usar o mouse e o teclado."
+    ? "O técnico pode ver a tela e usar o mouse e o teclado. Seus movimentos e teclas têm prioridade."
     : "O técnico pode ver a tela compartilhada.";
   transporte?.enviarDados({ tipo: "permissao", controle: permitido, computador, capturaNativa: capturaWindows });
 }
@@ -494,7 +494,7 @@ function receberDados(dados) {
       });
     }
     el("controle-tecnico").textContent = dados.controle === true
-      ? "Clique no vídeo para usar o teclado. Ctrl+Alt+Esc devolve o foco ao SyncDesk."
+      ? "O cliente tem prioridade no mouse e no teclado. Clique no vídeo para digitar. Ctrl+Alt+Esc devolve o foco ao SyncDesk."
       : "Visualizando a tela. O cliente não está compartilhando o mouse e o teclado.";
   } else if (tecnico && dados.tipo === "monitores") {
     aplicarMonitores(dados);

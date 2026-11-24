@@ -99,7 +99,7 @@ export class ControleDoTecnico {
       this.#video.blur();
       return;
     }
-    this.#enviar({ acao: "tecla", codigo: evento.code, pressionar });
+    this.#enviar({ acao: "tecla", codigo: evento.code, pressionar, repeticao: evento.repeat });
   }
 
   #soltar() {

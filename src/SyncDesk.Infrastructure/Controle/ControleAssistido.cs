@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace SyncDesk.Controle;
 
-internal sealed class ControleAssistido
+internal sealed class ControleAssistido(Action<Action> agendar)
 {
     private readonly HashSet<(ushort Vk, bool Estendida)> _teclas = [];
     private readonly HashSet<int> _botoes = [];
@@ -12,13 +12,20 @@ internal sealed class ControleAssistido
     private long _janela;
     private int _eventos;
     private long _ultimoTesteDesktop;
+    private MonitorEntradaLocal? _entradaLocal;
 
     public bool Ativo => _tela is not null || _monitor is not null;
 
     public bool AutorizarMonitor(MonitorWindows monitor)
     {
-        Revogar();
-        if (!EntradaWindows.DesktopInterativo() || !MonitoresWindows.Listar().Contains(monitor)) return false;
+        if (!EntradaWindows.DesktopInterativo() || !MonitoresWindows.Listar().Contains(monitor) ||
+            !ObservarEntradaLocal())
+        {
+            Revogar();
+            return false;
+        }
+        SoltarTudo();
+        _tela = null;
         _monitor = monitor;
         ReiniciarPulso();
         return true;
@@ -33,11 +40,25 @@ internal sealed class ControleAssistido
 
         double proporcao = (double)largura / altura;
         double desktop = (double)tela.Largura / tela.Altura;
-        if (Math.Abs(proporcao / desktop - 1) > 0.025) return false;
+        if (Math.Abs(proporcao / desktop - 1) > 0.025 || !ObservarEntradaLocal()) return false;
         _tela = tela;
         ReiniciarPulso();
         return true;
     }
+
+    private bool ObservarEntradaLocal()
+    {
+        if (_entradaLocal is not null) return true;
+        var monitor = new MonitorEntradaLocal(() => agendar(() =>
+        {
+            if (_entradaLocal?.Prioridade.Pausada(Environment.TickCount64) == true) SoltarTudo();
+        }));
+        if (!monitor.Iniciar()) return false;
+        _entradaLocal = monitor;
+        return true;
+    }
+
+    private bool ClienteUsando() => _entradaLocal?.Prioridade.Pausada(Environment.TickCount64) == true;
 
     private void ReiniciarPulso()
     {
@@ -76,23 +97,40 @@ internal sealed class ControleAssistido
             case "soltar":
                 SoltarTudo();
                 break;
+            default:
+                if (!ClienteUsando()) return AplicarEntrada(dados, acao);
+                SoltarTudo();
+                break;
+        }
+        return true;
+    }
+
+    private bool AplicarEntrada(JsonElement dados, string acao)
+    {
+        switch (acao)
+        {
             case "mover" when Coordenadas(dados, out var x, out var y):
                 return Mover(x, y);
             case "botao" when Coordenadas(dados, out var bx, out var by) &&
                 Inteiro(dados, "botao", out int botao) && botao is >= 0 and <= 2 &&
                 Booleano(dados, "pressionar", out bool pressionar):
                 if (!pressionar && !_botoes.Contains(botao)) break;
-                if (!Mover(bx, by) || !EntradaWindows.Botao(botao, pressionar)) return false;
+                if (!Mover(bx, by)) return false;
+                if (ClienteUsando()) break;
+                if (!EntradaWindows.Botao(botao, pressionar)) return false;
                 if (pressionar) _botoes.Add(botao);
                 else _botoes.Remove(botao);
                 break;
             case "rolar" when Coordenadas(dados, out var rx, out var ry) &&
                 Inteiro(dados, "dx", out int dx) && Inteiro(dados, "dy", out int dy):
-                return Mover(rx, ry) && EntradaWindows.Rolar(Math.Clamp(dx, -360, 360), Math.Clamp(dy, -360, 360));
+                return Mover(rx, ry) && (ClienteUsando() ||
+                    EntradaWindows.Rolar(Math.Clamp(dx, -360, 360), Math.Clamp(dy, -360, 360)));
             case "tecla" when MapaTeclas.TentarMapear(Texto(dados, "codigo"), out var tecla) &&
                 Booleano(dados, "pressionar", out bool baixar):
                 if (baixar && _monitor is { } selecionado && !MonitoresWindows.FocoEm(selecionado)) break;
                 if (!baixar && !_teclas.Contains(tecla)) break;
+                if (baixar && Booleano(dados, "repeticao", out bool repeticao) && repeticao && !_teclas.Contains(tecla))
+                    break;
                 if (!EntradaWindows.Tecla(tecla.Vk, tecla.Estendida, baixar)) return false;
                 if (baixar) _teclas.Add(tecla);
                 else _teclas.Remove(tecla);
@@ -106,12 +144,17 @@ internal sealed class ControleAssistido
         _tela = null;
         _monitor = null;
         SoltarTudo();
+        _entradaLocal?.Dispose();
+        _entradaLocal = null;
     }
 
     private void SoltarTudo()
     {
-        foreach (var tecla in _teclas) EntradaWindows.Tecla(tecla.Vk, tecla.Estendida, false);
-        foreach (int botao in _botoes) EntradaWindows.Botao(botao, false);
+        foreach (var tecla in _teclas)
+            if (_entradaLocal?.Prioridade.TeclaPressionada(tecla.Vk) != true)
+                EntradaWindows.Tecla(tecla.Vk, tecla.Estendida, false);
+        foreach (int botao in _botoes)
+            if (_entradaLocal?.Prioridade.BotaoPressionado(botao) != true) EntradaWindows.Botao(botao, false);
         _teclas.Clear();
         _botoes.Clear();
     }

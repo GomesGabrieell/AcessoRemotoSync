@@ -75,8 +75,8 @@ public partial class AtendimentoWindow
         LiberarPixels();
         _selecao = tela;
         _geracaoCaptura++;
-        _controle.Revogar();
         bool controle = _controleConcedido && tela is not null && _controle.AutorizarMonitor(tela);
+        if (!controle) _controle.Revogar();
         MostrarIndicador(controle);
         Responder(new { tipo = "permissao", controle, computador = Environment.MachineName });
         AnunciarMonitores();

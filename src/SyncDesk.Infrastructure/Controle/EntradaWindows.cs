@@ -5,6 +5,7 @@ namespace SyncDesk.Controle;
 
 internal static partial class EntradaWindows
 {
+    internal const nuint MarcaRemota = 0x5359444B;
     private const uint Mouse = 0, Teclado = 1, MoverAbsoluto = 0xC001;
     private const uint SoltarTecla = 2, TeclaEstendida = 1;
     private static readonly (uint Pressionar, uint Soltar)[] Botoes = [(2, 4), (32, 64), (8, 16)];
@@ -56,7 +57,8 @@ internal static partial class EntradaWindows
                 Teclado = new DadosTeclado
                 {
                     Vk = vk,
-                    Flags = (estendida ? TeclaEstendida : 0) | (pressionar ? 0 : SoltarTecla)
+                    Flags = (estendida ? TeclaEstendida : 0) | (pressionar ? 0 : SoltarTecla),
+                    Extra = MarcaRemota
                 }
             }
         });
@@ -64,7 +66,7 @@ internal static partial class EntradaWindows
     private static Input MontarMouse(uint flags, int dados = 0, int x = 0, int y = 0) => new()
     {
         Tipo = Mouse,
-        Dados = new DadosInput { Mouse = new DadosMouse { X = x, Y = y, Dados = dados, Flags = flags } }
+        Dados = new DadosInput { Mouse = new DadosMouse { X = x, Y = y, Dados = dados, Flags = flags, Extra = MarcaRemota } }
     };
 
     private static bool Enviar(Input pacote) => SendInput(1, ref pacote, Marshal.SizeOf<Input>()) == 1;
