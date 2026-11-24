@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+artifacts/
+node_modules/
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.Production.local.json
+*.pfx
+*.p12
+*.key
+*.pem
+*.user
+*.suo

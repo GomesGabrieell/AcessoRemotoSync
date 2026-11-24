@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SyncDesk · Painel de suporte</title>
+  <link rel="stylesheet" href="/painel-web.css">
+  <script type="module" src="/painel-web.js"></script>
+</head>
+<body>
+  <section id="entrada" class="acesso" hidden>
+    <div class="marca"><span class="marca-icone" aria-hidden="true"></span><span>SyncDesk<small>Sync Softwares</small></span></div>
+    <h1>Entrar no painel</h1>
+    <form id="login">
+      <label for="usuario">Usuário</label><input id="usuario" autocomplete="username" maxlength="80" required>
+      <label for="senha">Credencial</label><input id="senha" type="password" autocomplete="current-password" maxlength="256" required>
+      <button class="primario" type="submit">Entrar</button>
+    </form>
+    <p id="erro-login" role="status"></p>
+  </section>
+  <div id="dashboard" class="aplicacao" hidden>
+    <aside class="lateral" aria-label="Navegação principal">
+      <div class="marca"><span class="marca-icone" aria-hidden="true"></span><span class="nome-marca">SyncDesk<small>Sync Softwares</small></span></div>
+      <nav>
+        <a href="#painel-principal" aria-label="Visão geral" title="Visão geral" aria-current="page"><span aria-hidden="true">▦</span><b>Visão geral</b></a>
+      </nav>
+    </aside>
+    <div class="conteudo">
+      <header class="topo">
+        <button id="recolher" class="discreto" type="button" aria-label="Recolher menu" aria-expanded="true" title="Recolher menu">☰</button>
+        <span class="topo-titulo">Painel de suporte</span>
+        <span id="nome-tecnico" class="nome-tecnico"></span>
+        <button id="sair" class="discreto" type="button">Sair</button>
+      </header>
+      <main id="painel-principal">
+        <section class="cartao" aria-labelledby="titulo-link">
+          <div class="linha-titulo">
+            <h1 id="titulo-link">Link de atendimento</h1>
+            <button class="primario" id="novo-link" type="button">Novo link</button>
+          </div>
+          <div class="linha-link">
+            <label class="sr" for="link">Link de atendimento</label>
+            <input id="link" type="url" placeholder="Nenhum link disponível" readonly>
+            <button id="copiar-link" type="button" disabled>Copiar link</button>
+          </div>
+          <p id="status-convite" class="selo" role="status" hidden></p>
+          <p id="retorno" role="status"></p>
+        </section>
+        <section class="cartao" aria-labelledby="titulo-ativos">
+          <h2 id="titulo-ativos">Atendimentos ativos</h2>
+          <div class="tabela"><table>
+            <thead><tr><th>Cliente</th><th>Computador</th><th>Código da sessão</th><th>Status</th><th>Início</th><th>Duração</th><th>Ações</th></tr></thead>
+            <tbody id="ativos"></tbody>
+          </table></div>
+        </section>
+        <section class="cartao" aria-labelledby="titulo-ultimos">
+          <h2 id="titulo-ultimos">Últimos atendimentos</h2>
+          <div class="tabela"><table>
+            <thead><tr><th>Cliente</th><th>Computador</th><th>Código da sessão</th><th>Status</th><th>Início</th><th>Duração</th></tr></thead>
+            <tbody id="ultimos"></tbody>
+          </table></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <iframe id="visualizador" title="Sessão remota SyncDesk" allow="fullscreen" hidden></iframe>
+</body>
+</html>

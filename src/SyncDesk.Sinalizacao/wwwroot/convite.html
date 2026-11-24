@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SyncDesk · Atendimento remoto</title>
+  <link rel="stylesheet" href="/painel-web.css">
+  <script type="module" src="/convite.js"></script>
+</head>
+<body class="pagina-convite">
+  <main class="acesso">
+    <div class="marca"><span class="marca-icone" aria-hidden="true"></span><span>SyncDesk<small>Sync Softwares</small></span></div>
+    <h1>Atendimento remoto</h1>
+    <p id="orientacao" role="status">Verificando o convite…</p>
+    <section id="instrucoes" hidden>
+      <a class="primario" id="baixar">Baixar e iniciar atendimento</a>
+      <p>Abra o arquivo baixado no Windows. No SyncDesk, confira o nome do técnico e autorize o acesso para iniciar o atendimento.</p>
+      <details>
+        <summary>Código de convite</summary>
+        <p>Se o SyncDesk já estiver aberto, use <strong>Já tenho um código de convite</strong> e cole o código abaixo.</p>
+        <label class="sr" for="chave">Código do convite</label><input id="chave" readonly>
+        <button id="copiar-chave" type="button">Copiar código</button>
+      </details>
+    </section>
+  </main>
+</body>
+</html>

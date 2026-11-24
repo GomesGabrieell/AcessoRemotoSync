@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SyncDesk</title>
+  <link rel="stylesheet" href="./syncdesk.css">
+  <script type="module" src="./syncdesk.js"></script>
+</head>
+<body>
+  <header class="cabecalho">
+    <div class="marca"><span class="marca-icone" aria-hidden="true"></span><strong>SyncDesk</strong></div>
+    <div class="cabecalho-acoes">
+      <span id="indicador-servidor" class="indicador" data-conexao="abrindo">Conectando</span>
+      <button id="tema-rapido" class="discreto" type="button" aria-label="Alternar tema">Tema</button>
+      <details id="preferencias" class="menu-preferencias" hidden>
+        <summary>Configurações</summary>
+        <div class="menu-flutuante">
+          <label for="tema-painel">Aparência</label>
+          <select id="tema-painel"><option value="sistema">Seguir o Windows</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select>
+          <label id="linha-historico" hidden><input id="guardar-historico" type="checkbox"> Guardar histórico neste computador</label>
+          <div id="historico" hidden><h2>Atendimentos recentes</h2><p id="historico-vazio">Nenhum atendimento registrado.</p><ul id="historico-lista"></ul></div>
+        </div>
+      </details>
+      <a id="trocar-modo"></a>
+    </div>
+  </header>
+  <main>
+    <section id="cliente" hidden>
+      <h1>Receber suporte</h1>
+      <div id="codigo-cliente" hidden>
+        <p>Informe seu código de atendimento ao técnico.</p>
+        <div class="codigo"><output id="codigo" aria-label="Código de atendimento"></output></div>
+        <button id="copiar" class="primario" type="button">Copiar código</button>
+        <details id="usar-convite" class="secundario" hidden>
+          <summary>Já tenho um código de convite</summary>
+          <form id="associar-convite">
+            <label for="codigo-convite">Código do convite</label>
+            <input id="codigo-convite" maxlength="64" autocomplete="off" required>
+            <button type="submit">Vincular convite</button>
+          </form>
+        </details>
+      </div>
+      <div id="consentimento" hidden>
+        <h2>Solicitação de atendimento remoto</h2>
+        <p id="identidade"></p>
+        <p>Um técnico da Sync Softwares está solicitando acesso remoto ao seu computador para auxiliá-lo durante o atendimento. Autorize a conexão para permitir a visualização da sua tela e, quando autorizado, o controle do mouse e do teclado.</p>
+        <p>Você poderá encerrar o atendimento a qualquer momento.</p>
+        <p id="permissao-cliente" class="nota"></p>
+        <label class="permite-controle" id="linha-controle" hidden><input id="autorizar-controle" type="checkbox"> Permitir mouse e teclado</label>
+        <div class="acoes">
+          <button id="aceitar" class="primario" type="button">Autorizar acesso</button>
+          <button id="recusar" type="button">Recusar acesso</button>
+        </div>
+      </div>
+      <div id="atividade-cliente" class="sessao-cliente" hidden>
+        <h2>Atendimento ativo</h2>
+        <p id="controle-cliente"></p>
+        <button id="autorizar-monitores" type="button" hidden>Autorizar novas telas</button>
+        <button id="chat-cliente" type="button" aria-expanded="false" aria-controls="chat">Chat</button>
+      </div>
+    </section>
+    <section id="tecnico" hidden>
+      <h1>Prestar suporte</h1>
+      <form id="conectar">
+        <label for="codigo-tecnico">Código do cliente</label>
+        <input id="codigo-tecnico" inputmode="numeric" maxlength="12" placeholder="000 000" required>
+        <label id="rotulo-credencial" for="credencial">Credencial do técnico</label>
+        <input id="credencial" type="password" maxlength="256" autocomplete="off" required>
+        <button class="primario" type="submit">Conectar</button>
+      </form>
+      <section id="area-remota" aria-label="Área de trabalho remota" hidden>
+        <div class="barra-sessao">
+          <span class="marca marca-sessao"><span class="marca-icone" aria-hidden="true"></span><b>SyncDesk</b></span>
+          <span class="conectado"><span aria-hidden="true">●</span> Sessão ativa</span>
+          <strong id="computador-remoto">Computador do cliente</strong>
+          <time id="tempo-sessao">00:00:00</time>
+          <details id="indicador-qualidade" class="acoes-sessao">
+            <summary title="Qualidade da transmissão"><span class="icone-barra" aria-hidden="true">&#xe884;</span> <span class="rotulo-qualidade">Qualidade automática</span></summary>
+            <div class="menu-flutuante">
+              <button type="button" data-modo-qualidade="automatica" aria-pressed="true">Automática — Recomendada</button>
+              <button type="button" data-modo-qualidade="maxima" aria-pressed="false">Máxima qualidade</button>
+              <button type="button" data-modo-qualidade="equilibrada" aria-pressed="false">Equilibrada</button>
+              <button type="button" data-modo-qualidade="desempenho" aria-pressed="false">Alto desempenho</button>
+              <button type="button" data-modo-qualidade="economia" aria-pressed="false">Economia de dados</button>
+            </div>
+          </details>
+          <div id="abas-monitores" class="abas-monitores" role="group" aria-label="Monitores remotos" hidden></div>
+          <div class="barra-acoes">
+            <button id="mostrar-arquivos" type="button" title="Transferência de arquivos" aria-expanded="false" aria-controls="transferencias"><span class="icone-barra" aria-hidden="true">&#xe8b7;</span> <span id="rotulo-arquivos">Arquivos</span></button>
+            <button id="chat-tecnico" type="button" title="Abrir chat" aria-expanded="false" aria-controls="chat"><span class="icone-barra" aria-hidden="true">&#xe8bd;</span> Chat</button>
+            <details class="acoes-sessao"><summary title="Ações da sessão">Ações</summary><div class="menu-flutuante">
+              <button id="ajustar-video" type="button" aria-pressed="false">Tamanho original</button>
+              <button id="mostrar-metricas" type="button" aria-expanded="false">Estatísticas da conexão</button>
+            </div></details>
+            <button id="tela-cheia" type="button" title="Tela cheia" aria-label="Tela cheia"><span class="icone-barra" aria-hidden="true">&#xe740;</span></button>
+            <button id="encerrar-tecnico" class="perigo" type="button" title="Encerrar sessão"><span class="icone-barra" aria-hidden="true">&#xe8bb;</span> Encerrar</button>
+          </div>
+        </div>
+        <div id="viewport-video" class="viewport-video">
+          <video id="tela" autoplay muted playsinline tabindex="-1" aria-label="Tela compartilhada pelo cliente"
+                 aria-describedby="controle-tecnico"></video>
+          <p id="troca-monitor" role="status" hidden>Preparando tela…</p>
+          <p id="diagnostico-video" role="status" hidden></p>
+        </div>
+        <p id="controle-tecnico" class="dica-controle"></p>
+        <details id="metricas" class="secundario" hidden>
+          <summary>Estatísticas da conexão</summary>
+          <dl class="leituras">
+            <div><dt>Latência (RTT)</dt><dd id="metrica-rtt">—</dd></div>
+            <div><dt>Captura</dt><dd id="metrica-captura">—</dd></div>
+            <div><dt>Envio</dt><dd id="metrica-envio">—</dd></div>
+            <div><dt>Decodificação</dt><dd id="metrica-fps">—</dd></div>
+            <div><dt>Renderização</dt><dd id="metrica-render">—</dd></div>
+            <div><dt>Bitrate</dt><dd id="metrica-bitrate">—</dd></div>
+            <div><dt>Perda de pacotes</dt><dd id="metrica-perda">—</dd></div>
+            <div><dt>Descartados</dt><dd id="metrica-descartados">—</dd></div>
+            <div><dt>Congelamentos</dt><dd id="metrica-congelamentos">—</dd></div>
+            <div><dt>Resolução</dt><dd id="metrica-resolucao">—</dd></div>
+            <div><dt>Codec</dt><dd id="metrica-codec">—</dd></div>
+            <div><dt>Rota</dt><dd id="metrica-rota">—</dd></div>
+            <div><dt>Qualidade e meta</dt><dd id="metrica-modo">—</dd></div>
+            <div><dt>API de captura</dt><dd id="metrica-fonte">—</dd></div>
+            <div><dt>Custo de captura</dt><dd id="metrica-capturaMs">—</dd></div>
+            <div><dt>Custo de codificação</dt><dd id="metrica-codificacao">—</dd></div>
+            <div><dt>CPU do agente</dt><dd id="metrica-cpu">—</dd></div>
+            <div><dt>Uso da GPU</dt><dd id="metrica-gpu">—</dd></div>
+            <div><dt>Memória do painel Windows</dt><dd id="metrica-memoria">—</dd></div>
+          </dl>
+        </details>
+      </section>
+    </section>
+    <p id="status" role="status">Abrindo sinalização…</p>
+    <button id="encerrar" type="button" hidden>Encerrar atendimento</button>
+    <button id="reconectar" type="button" hidden>Reconectar ao servidor</button>
+    <section id="chat" aria-label="Chat de atendimento" hidden>
+      <h2>Chat da sessão</h2>
+      <ol id="mensagens-chat" aria-live="polite"></ol>
+      <form id="form-chat">
+        <input id="texto-chat" aria-label="Mensagem" maxlength="240" required>
+        <button type="submit" class="primario">Enviar</button>
+      </form>
+    </section>
+    <section id="transferencias" aria-label="Transferência de arquivos" hidden>
+      <h2>Transferência de arquivos</h2>
+      <p id="transferencias-vazio">Use Ctrl+C e Ctrl+V no Explorador durante o atendimento.</p>
+      <div id="arquivos-web" hidden>
+        <label for="selecionar-arquivos">Arquivos do técnico</label>
+        <input id="selecionar-arquivos" type="file" multiple>
+        <p>Para receber, copie arquivos no Explorador remoto e solicite-os aqui.</p>
+        <button id="solicitar-arquivos" type="button" disabled>Receber arquivos do cliente</button>
+        <ul id="downloads-web"></ul>
+      </div>
+      <div id="envio" class="transferencia" hidden>
+        <strong>Envio</strong>
+        <p id="envio-texto" role="status"></p>
+        <progress id="envio-progresso" max="100" aria-label="Progresso do envio"></progress>
+        <span id="envio-velocidade"></span>
+        <button id="envio-cancelar" type="button">Cancelar envio</button>
+      </div>
+      <div id="recebimento" class="transferencia" hidden>
+        <strong>Recebimento</strong>
+        <p id="recebimento-texto" role="status"></p>
+        <progress id="recebimento-progresso" max="100" aria-label="Progresso do recebimento"></progress>
+        <span id="recebimento-velocidade"></span>
+        <button id="recebimento-cancelar" type="button">Cancelar recebimento</button>
+      </div>
+    </section>
+  </main>
+  <footer><span id="versao-painel"></span></footer>
+</body>
+</html>

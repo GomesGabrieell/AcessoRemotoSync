@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SyncDesk.App/SyncDesk.App.csproj" />
+    <Project Path="src/SyncDesk.Domain/SyncDesk.Domain.csproj" />
+    <Project Path="src/SyncDesk.Infrastructure/SyncDesk.Infrastructure.csproj" />
+    <Project Path="src/SyncDesk.Sinalizacao/SyncDesk.Sinalizacao.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SyncDesk.Arquivos.Testes/SyncDesk.Arquivos.Testes.csproj" />
+    <Project Path="tests/SyncDesk.Domain.Testes/SyncDesk.Domain.Testes.csproj" />
+  </Folder>
+</Solution>

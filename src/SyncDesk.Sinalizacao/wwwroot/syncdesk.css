@@ -1,0 +1,153 @@
+:root {
+  color-scheme: light dark;
+  font: 15px/1.55 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --page: light-dark(#f2f6fd, #101827);
+  --surface: light-dark(#fff, #172338);
+  --ink: light-dark(#132744, #e8f0ff);
+  --secondary: light-dark(#4d6282, #b1c3de);
+  --line: light-dark(#d4e0f2, #344963);
+  --tint: light-dark(#eaf2ff, #203758);
+  --blue: #1556cc;
+  --link: light-dark(#164fa8, #96bcff);
+  --green: light-dark(#096845, #8de5b9);
+  --danger: light-dark(#a3183c, #ffb0bd);
+}
+:root[data-tema="claro"] { color-scheme: light; }
+:root[data-tema="escuro"] { color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; color: var(--ink); background: var(--page); }
+.cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px clamp(15px, 4vw, 34px); min-height: 65px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.marca, .cabecalho-acoes { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+.marca strong { font-size: 23px; letter-spacing: -.035em; }
+.marca-icone { display: grid; place-items: center; position: relative; width: 36px; height: 36px; border-radius: 10px; background: var(--blue); }
+.marca-icone::before { content: ""; width: 17px; height: 12px; border: 2px solid white; border-radius: 3px; margin-bottom: 4px; }
+.marca-icone::after { content: ""; position: absolute; bottom: 7px; width: 10px; border-top: 2px solid white; }
+a { color: var(--link); text-underline-offset: 3px; }
+.indicador { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 99px; padding: 4px 9px; font-size: 12px; color: var(--secondary); }
+.indicador::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.indicador[data-conexao="online"], .conectado { color: var(--green); }
+.indicador[data-conexao="offline"] { color: var(--danger); }
+main { width: calc(100% - 26px); max-width: 575px; margin: clamp(20px, 6vh, 48px) auto 12px; padding: clamp(17px, 4vw, 32px); border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+body[data-modo="cliente"] main { text-align: center; }
+body[data-modo="cliente"] .acoes { justify-content: center; }
+h1 { margin: 0 0 10px; font-size: clamp(25px, 4vw, 36px); letter-spacing: -.04em; line-height: 1.15; }
+h2 { margin: 0 0 6px; font-size: 18px; }
+p { margin: 0 0 12px; }
+.codigo { margin: 18px 0 12px; border: 1px solid var(--line); border-radius: 13px; background: var(--tint); color: var(--link); padding: 12px; }
+output { font-size: clamp(38px, 9vw, 60px); line-height: 1.15; font-weight: 700; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.acoes, .barra-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+form { display: grid; gap: 7px; }
+label, summary { font-weight: 600; }
+input:not([type="checkbox"]), select { width: 100%; margin-bottom: 6px; }
+button, input:not([type="checkbox"]), select { border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; padding: 8px 12px; min-height: 40px; }
+button { cursor: pointer; font-weight: 650; }
+button:hover:not(:disabled) { border-color: var(--link); }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+button:disabled { opacity: .58; cursor: default; }
+.primario { color: white; background: var(--blue); border-color: var(--blue); }
+.discreto { min-height: 32px; font-size: 13px; padding: 4px 8px; }
+.perigo { color: var(--danger); }
+.nota, footer, .dica-controle, #status { color: var(--secondary); }
+#status { margin: 13px 0 6px; font-weight: 600; }
+#status[data-espera="true"]::before { content: ""; display: inline-block; vertical-align: -1px; margin-right: 7px; width: 10px; height: 10px; border: 2px solid var(--line); border-top-color: var(--link); border-radius: 50%; animation: espera .85s linear infinite; }
+@keyframes espera { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { #status::before { animation: none !important; } }
+.sessao-cliente, #consentimento { margin-top: 16px; padding: 17px; background: var(--tint); border-radius: 10px; }
+#identidade { font-weight: 700; }
+.secundario { margin-top: 15px; border-top: 1px solid var(--line); padding-top: 10px; }
+.secundario summary { cursor: pointer; margin-bottom: 7px; }
+.secundario select { max-width: 210px; margin: 5px 0 8px; display: block; }
+#linha-historico { display: flex; align-items: center; gap: 6px; }
+#historico { margin-top: 12px; color: var(--secondary); }
+#historico-lista { margin: 0; padding-left: 20px; }
+body[data-remoto="true"] main, body[data-remoto="true"] main:fullscreen {
+  width: 100%; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0;
+  height: 100dvh; position: relative; background: #080f1e;
+}
+body[data-remoto="true"] :is(.cabecalho, footer, #tecnico > h1) { display: none; }
+.barra-sessao {
+  position: relative; z-index: 2; display: flex; align-items: center; height: 32px; gap: clamp(5px, 1vw, 14px);
+  padding: 0 6px; background: #0b1e3a; color: #f0f6ff; border-bottom: 1px solid #244266;
+  white-space: nowrap; font-size: 12px; line-height: 1;
+}
+.barra-sessao strong { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.barra-sessao .conectado { color: #aaf7c8; }
+.marca-sessao { gap: 5px; flex-wrap: nowrap; }
+.marca-sessao .marca-icone { width: 21px; height: 21px; border-radius: 5px; }
+.marca-sessao .marca-icone::before { width: 10px; height: 7px; border-width: 1px; border-radius: 2px; margin-bottom: 2px; }
+.marca-sessao .marca-icone::after { bottom: 4px; width: 6px; border-width: 1px; }
+#tempo-sessao { font-variant-numeric: tabular-nums; }
+.barra-acoes, .abas-monitores { display: flex; flex-wrap: nowrap; align-items: center; gap: 3px; }
+.abas-monitores { max-width: min(28vw, 280px); overflow-x: auto; scrollbar-width: thin; }
+.barra-sessao button, .barra-sessao summary {
+  min-height: 24px; padding: 3px 6px; border-radius: 5px; font-size: inherit; font-weight: 600;
+  background: #122947; border: 1px solid #304968; color: inherit;
+}
+.barra-sessao summary { line-height: 16px; }
+.barra-sessao button[aria-pressed="true"] { border-color: #79b5ff; background: #174b87; }
+.barra-sessao .perigo { background: #a01932; border-color: #dd6078; color: #fff; }
+.icone-barra { font: 12px "Segoe MDL2 Assets", "Segoe Fluent Icons", sans-serif; }
+#indicador-qualidade .icone-barra, #mostrar-arquivos[data-transferindo="true"] { color: #aaf7c8; }
+#encerrar:not([hidden]) { border-color: var(--danger); color: var(--danger); }
+.viewport-video { position: relative; height: calc(100dvh - 32px); overflow: hidden; background: #080f1e; }
+.viewport-video[data-original="true"] { overflow: auto; }
+.viewport-video:not([data-original="true"]) video {
+  position: absolute; inset: 0; margin: auto; max-width: var(--video-largura, 100%); max-height: var(--video-altura, 100%);
+}
+#troca-monitor { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; background: #080f1e; color: white; }
+#diagnostico-video {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); margin: 0; padding: 4px 9px;
+  background: #0b1e3a; color: #f0f6ff; border-radius: 6px; pointer-events: none; font-size: 12px;
+}
+#indicador-qualidade .menu-flutuante { right: auto; left: 0; }
+video { display: block; width: 100%; height: 100%; object-fit: contain; }
+video.controlavel { cursor: crosshair; }
+video:focus-visible { outline: 2px solid #80b3ff; outline-offset: -2px; }
+.viewport-video[data-original="true"] video { width: var(--video-largura, 100%); height: var(--video-altura, 100%); max-width: none; margin-inline: auto; }
+body[data-remoto="true"] :is(.dica-controle, #status) {
+  position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%);
+}
+.menu-preferencias, .acoes-sessao { position: relative; }
+.menu-preferencias summary { cursor: pointer; font-size: 13px; }
+.menu-flutuante {
+  position: absolute; top: calc(100% + 5px); right: 0; z-index: 3; min-width: max-content;
+  padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+  box-shadow: 0 5px 20px #05132932;
+}
+.acoes-sessao .menu-flutuante { background: #0b1e3a; border-color: #304968; }
+.acoes-sessao .menu-flutuante button { display: block; width: 100%; margin-block: 2px; text-align: left; }
+#cliente:has(#consentimento:not([hidden])) h1, #cliente:has(#atividade-cliente:not([hidden])) h1 { display: none; }
+#consentimento, .sessao-cliente { margin: 0; }
+#identidade:empty { display: none; }
+.permite-controle { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.sessao-cliente h2 { color: var(--green); }
+.sessao-cliente h2::before { content: "●"; margin-right: 6px; }
+body[data-remoto="true"] :is(#transferencias, #chat, #metricas) {
+  position: absolute; z-index: 1; right: 8px; top: 38px; width: min(330px, calc(100% - 16px)); margin: 0;
+  max-height: calc(100% - 44px); overflow: auto; padding: 12px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--surface); box-shadow: 0 5px 20px #0005;
+}
+#chat { text-align: left; padding-top: 10px; }
+#mensagens-chat { max-height: 145px; overflow: auto; margin: 0 0 6px; padding: 0; list-style: none; }
+#mensagens-chat li { overflow-wrap: anywhere; padding: 2px 0; }
+#form-chat { display: flex; align-items: baseline; }
+.leituras { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; font-size: 13px; }
+.leituras dt { color: var(--secondary); }
+.leituras dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+#transferencias { margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line); }
+.transferencia { padding: 5px 0; overflow-wrap: anywhere; }
+.transferencia p { margin: 3px 0; }
+.transferencia progress { width: min(235px, 100%); margin-right: 8px; vertical-align: middle; accent-color: var(--blue); }
+.transferencia button { min-height: 32px; padding: 3px 9px; margin-left: 8px; }
+footer { max-width: 575px; margin: 0 auto 16px; text-align: center; font-size: 12px; }
+@media (max-width: 520px) { .cabecalho { align-items: flex-start; } .cabecalho-acoes { justify-content: end; } }
+@media (max-width: 685px) {
+  .marca-sessao b, .rotulo-qualidade { display: none; }
+  .barra-sessao { gap: 4px; }
+  .barra-sessao button, .barra-sessao summary { padding-inline: 4px; }
+}
+body[data-web="true"] .barra-sessao { background: #141c1a; border-color: #33463e; }
+body[data-web="true"] .barra-sessao :is(button, summary) { background: #21312a; border-color: #395345; }
+body[data-web="true"] .barra-sessao button[aria-pressed="true"] { color: #bdffd8; border-color: #75e1ac; background: #214233; }
+body[data-web="true"] .barra-sessao .perigo { background: #a01932; border-color: #dd6078; }
