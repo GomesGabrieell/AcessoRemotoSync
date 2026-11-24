@@ -120,9 +120,9 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   assert.equal((await outro.request.delete(url + "/api/web/convites/" + id, { headers: { Origin: url } })).status(), 404);
   const clienteCtx = await browser.newContext({ ignoreHTTPSErrors: true, acceptDownloads: true });
   const convite = await clienteCtx.newPage();
-  await convite.goto(urlConvite + "?modo=windows");
+  await convite.goto(urlConvite);
   const download = convite.waitForEvent("download");
-  await convite.getByRole("link", { name: "Baixar e iniciar atendimento" }).click();
+  await convite.getByRole("link", { name: "Baixar SyncDesk para Windows" }).click();
   const baixado = await download;
   assert.match(baixado.suggestedFilename(), executavelNativo ? /^SyncDesk-web-local-[a-f\d]{48}\.exe$/ :
     /^SyncDesk-[a-f\d]{48}\.exe$/);
@@ -140,9 +140,9 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
     ctx.fillStyle = "green";
     ctx.fillRect(0, 0, 320, 200);
     const jpeg = canvas.toDataURL("image/jpeg").split(",")[1];
-    ponte.postMessage = ({ tipo, sessao }) => {
+    ponte.postMessage = ({ tipo, controle }) => {
       if (tipo === "atendimentoNativo") {
-        responder({ tipo: "permissao", controle: true, computador: "PC de teste" });
+        responder({ tipo: "permissao", controle, computador: "PC de teste" });
         responder({ tipo: "monitores", selecionado: "1", geracao: 1, telas: [{ id: "1", numero: 1, autorizado: true }] });
       }
       if (tipo === "capturar") responder({ tipo: "quadro", geracao: 1, jpeg });
@@ -177,10 +177,16 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
       aceite.once("error", reject);
       aceite.once("close", (codigo) => codigo === 0 ? resolve() : reject(new Error(saidaAceite)));
     });
-  } else await cliente.getByRole("button", { name: "Autorizar acesso" }).click();
+  } else {
+    const permissao = cliente.getByRole("checkbox", { name: "Permitir mouse e teclado" });
+    assert.equal(await permissao.isChecked(), false);
+    await permissao.check();
+    await cliente.getByRole("button", { name: "Autorizar acesso" }).click();
+  }
   const visor = painel.frameLocator("#visualizador");
   await visor.locator("#tela").waitFor();
   await visor.locator('[aria-label="Tela compartilhada pelo cliente · Tela 1"]').waitFor();
+  if (!executavelNativo) await visor.locator("video.controlavel").waitFor();
   const computador = await visor.locator("#computador-remoto").textContent();
   assert.equal(computador.toLowerCase(), (executavelNativo ? os.hostname() : "PC de teste").toLowerCase());
   assert.equal((await visor.locator(".barra-sessao").boundingBox()).height, 32);
@@ -307,7 +313,7 @@ test("painel web autoriza um convite único, abre mídia WebRTC e registra o ate
   await clienteWeb.goto(linkNavegador);
   const continuar = clienteWeb.getByRole("link", { name: "Continuar no navegador" });
   await continuar.waitFor();
-  assert.equal(await clienteWeb.locator("#baixar").isVisible(), false);
+  await clienteWeb.getByRole("link", { name: "Baixar SyncDesk para Windows" }).waitFor();
   await acessar.click();
   await continuar.click();
   await clienteWeb.getByText("Técnico: Ana", { exact: true }).waitFor();

@@ -4,7 +4,7 @@ Suporte assistido no Windows. A sinalização roda em ASP.NET Core 10 sobre HTTP
 
 ## Estado atual
 
-O SyncDesk 0.5.0 está pronto para **teste local e implantação piloto**. O técnico usa `/painel` para gerar um link. O cliente abre o convite, clica em **Continuar no navegador**, confere o nome do técnico e escolhe a tela ou janela para compartilhar. Ambos podem usar o chat e encerrar o atendimento. O cliente precisa de um navegador de computador compatível com compartilhamento de tela. As funções de controle do Windows e de transferência de arquivos pelo Explorador dependem do cliente portátil.
+O SyncDesk 0.5.0 está pronto para **teste local e implantação piloto**. O técnico usa `/painel` para gerar um link e atender pelo navegador. O cliente pode escolher **Continuar no navegador** para compartilhar uma tela ou janela. Para permitir mouse e teclado, o cliente seleciona **Baixar SyncDesk para Windows**, abre o portátil, marca **Permitir mouse e teclado** e clica em **Autorizar acesso**. O portátil também habilita a transferência de arquivos. Ambos podem usar o chat e encerrar o atendimento.
 
 O fluxo por convite foi validado no mesmo computador com o executável real e dois monitores físicos. A validação em duas redes independentes com TURN, controle real de mouse e teclado e transferência pelo Explorador ainda faz parte do aceite de implantação. As medições locais de vídeo e o roteiro de aceite estão nas seções abaixo.
 
@@ -261,7 +261,7 @@ Publique o servidor em HTTPS e configure STUN/TURN. Coloque o cliente com **um m
 
 | Cenário | Ação e critério de aprovação |
 | --- | --- |
-| 1. Convite | Entre em `/painel`, clique em **Novo link**, copie o endereço e abra-o no computador do cliente. Para este roteiro com controle e arquivos, acrescente `?modo=windows` ao link antes de baixar o portátil e confira se o convite é associado ao executá-lo. |
+| 1. Convite | Entre em `/painel`, clique em **Novo link**, copie o endereço e abra-o no computador do cliente. Para este roteiro com controle e arquivos, clique em **Baixar SyncDesk para Windows** e confira se o convite é associado ao executar o portátil. |
 | 2. Técnico em outro PC | No painel, confira a espera pela autorização do cliente. Para testar o modo desktop legado, abra o cliente sem convite e informe o código no `SyncDesk.exe --tecnico`. |
 | 3. Aceite | Confirme a identidade do técnico. Marque **Permitir mouse e teclado** para testar controle e clique em **Autorizar acesso**. Confira que a tela aparece após o aceite. Repita sem marcar para verificar somente visualização. |
 | 4. Tela e entrada | Comece com um monitor e verifique a ausência de abas. Adicione um monitor com resolução ou DPI diferente, autorize-o e alterne pelas abas. Clique, arraste, role e digite em cada tela. Redimensione a janela, use tela cheia e desconecte o monitor selecionado para conferir a atualização. |
@@ -301,7 +301,7 @@ dotnet publish .\src\SyncDesk.Sinalizacao -c Release -o .\artifacts\teste-web-lo
 ### Convites, consentimento e arquivos
 
 - O link vale por 10 minutos por padrão e é consumido quando o cliente entra no atendimento. Configure `SyncDesk__ValidadeConviteMinutos` no servidor para outro valor entre 1 e 60 minutos. Depois de recusar, encerrar ou perder a conexão, peça ao técnico um novo link.
-- Para oferecer controle do Windows e arquivos, o técnico pode acrescentar `?modo=windows` a um convite novo. O identificador vai no nome do executável baixado, preservando seu conteúdo e sua assinatura. Se o nome mudar, copie o **Código de convite** da página e use **Já tenho um código de convite** no aplicativo. A versão portátil deve apontar para o mesmo servidor que gerou o link.
+- Para oferecer controle do Windows e arquivos, configure o executável portátil no servidor. A opção de download aparece no mesmo convite. O identificador vai no nome do executável, preservando seu conteúdo e sua assinatura. Se o nome mudar, copie o **Código de convite** da página e use **Já tenho um código de convite** no aplicativo. A versão portátil deve apontar para o mesmo servidor que gerou o link.
 - O navegador autentica o técnico com cookie HttpOnly, SameSite e Secure em produção. O servidor limita tentativas e valida o proprietário do atendimento. O download não autoriza acesso. A captura, os arquivos e os comandos dependem do aceite e da vigência da sessão. **Sair** revoga as conexões associadas ao login.
 - **Arquivos** no técnico web permite escolher arquivos locais ou colá-los no painel quando o navegador os disponibilizar. No Windows remoto, cole na pasta de destino com **Ctrl+V**. Para a outra direção, copie no Explorador remoto, clique em **Receber arquivos do cliente** e baixe os arquivos conferidos. O navegador valida tamanho e SHA-256, mantém os arquivos recebidos em memória até o download ou fim da sessão e limita o lote a 64 arquivos, 32 MiB por arquivo e 64 MiB no total. Os atalhos nativos bidirecionais entre dois executáveis Windows continuam disponíveis no modo legado.
 
